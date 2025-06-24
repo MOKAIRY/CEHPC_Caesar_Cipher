@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض تفاعلي للتشفير</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .presentation-container {
+            width: 90%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .slide {
+            display: none;
+            padding: 60px;
+            min-height: 600px;
+            text-align: center;
+            background: linear-gradient(45deg, #f0f4f8, #ffffff);
+        }
+        .slide.active {
+            display: block;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        h1, h2, h3, p, li {
+            color: #2d3748;
+        }
+        h2 { font-size: 2.5em; margin-bottom: 25px; }
+        h3 { font-size: 2em; color: #667eea; margin-bottom: 20px; }
+        p, li { font-size: 1.3em; line-height: 1.6; margin-bottom: 15px; }
+        .emoji { font-size: 4em; margin: 20px 0; }
+        .interactive-demo {
+            background: #f7fafc;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        input, button {
+            padding: 12px 20px;
+            font-size: 1.1em;
+            margin: 10px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+        }
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+        .nav-btn {
+            padding: 15px 25px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+        .slide-counter {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+        .info-box {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 25px 0;
+            font-size: 1.1em;
+        }
+        #result, #password-result {
+            margin-top: 25px;
+            font-size: 1.3em;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slide-counter">
+            <span id="current-slide">1</span> / <span id="total-slides">2</span>
+        </div>
+        <div class="slide active">
+            <div class="emoji">🎯</div>
+            <h2>جربه بنفسك!</h2>
+            <div class="interactive-demo">
+                <h3>Caesar Cipher</h3>
+                <p>أدخل رسالة سرية لترى كيف يتم تشفيرها!</p>
+                <div style="margin: 20px 0;">
+                    <input type="text" id="plaintext" placeholder="أدخل رسالتك" style="width: 300px;">
+                </div>
+                <div class="controls">
+                    <div>
+                        <label>الإزاحة:</label>
+                        <input type="number" id="shift" value="3" min="1" max="27" style="width: 80px;">
+                    </div>
+                    <button onclick="encrypt()">🔐 تشفير</button>
+                    <button onclick="decrypt()">🔓 فك التشفير</button>
+                </div>
+                <div id="result"></div>
+            </div>
+            <div class="info-box">
+                <p><strong>كيف يعمل:</strong> Caesar Cipher تقوم بإزاحة كل حرف بعدد محدد من المواضع داخل الأبجدية.</p>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="emoji">🎯</div>
+            <h2>جربه بنفسك!</h2>
+            <div class="interactive-demo">
+                <h3>اختبار قوة كلمة المرور</h3>
+                <p>أدخل كلمة مرور لترى كم من الوقت ستستغرق لاختراقها:</p>
+                <div style="margin: 20px 0;">
+                    <input type="password" id="password-test" placeholder="ادخل كلمة مرور" style="width: 300px;">
+                </div>
+                <button onclick="testPassword()">🧪 اختبار القوة</button>
+                <div id="password-result"></div>
+            </div>
+            <p style="margin-top: 30px;">💡 <strong>نصيحة:</strong> استخدم كلمات مرور طويلة تحتوي على أرقام ورموز وحروف كبيرة وصغيرة.</p>
+        </div>
+    </div>
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()">← السابق</button>
+        <button class="nav-btn" onclick="nextSlide()">التالي →</button>
+    </div>
+    <script>
+        const arabicAlphabet = "ابتثجحخدذرزسشصضطظعغفقكلمنهوي";
+
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+        }
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function previousSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            else if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        function shiftText(text, shiftAmount, direction = 1) {
+            return text.split('').map(char => {
+                const index = arabicAlphabet.indexOf(char);
+                if (index === -1) return char;
+                let newIndex = (index + direction * shiftAmount + arabicAlphabet.length) % arabicAlphabet.length;
+                return arabicAlphabet[newIndex];
+            }).join('');
+        }
+        function encrypt() {
+            const text = document.getElementById('plaintext').value;
+            const shift = parseInt(document.getElementById('shift').value);
+            if (!text.trim()) {
+                document.getElementById('result').innerHTML = '⚠️ الرجاء إدخال رسالة لتشفيرها!';
+                return;
+            }
+            const result = shiftText(text, shift);
+            document.getElementById('result').innerHTML = `🔐 <strong>مشفر:</strong> ${result}`;
+        }
+        function decrypt() {
+            const text = document.getElementById('plaintext').value;
+            const shift = parseInt(document.getElementById('shift').value);
+            if (!text.trim()) {
+                document.getElementById('result').innerHTML = '⚠️ الرجاء إدخال رسالة لفك تشفيرها!';
+                return;
+            }
+            const result = shiftText(text, shift, -1);
+            document.getElementById('result').innerHTML = `🔓 <strong>مفكوك:</strong> ${result}`;
+        }
+        function testPassword() {
+            const password = document.getElementById('password-test').value;
+            if (!password.trim()) {
+                document.getElementById('password-result').innerHTML = '⚠️ الرجاء إدخال كلمة مرور لاختبارها!';
+                return;
+            }
+            const length = password.length;
+            let charset = 0;
+            if (password.match(/[a-z]/)) charset += 26;
+            if (password.match(/[A-Z]/)) charset += 26;
+            if (password.match(/[0-9]/)) charset += 10;
+            if (password.match(/[^A-Za-z0-9]/)) charset += 32;
+            const combinations = Math.pow(charset, length);
+            const guessesPerSecond = 1000000000;
+            const secondsToCrack = combinations / (2 * guessesPerSecond);
+
+            let timeString;
+            if (secondsToCrack < 60) timeString = `${Math.round(secondsToCrack)} ثانية`;
+            else if (secondsToCrack < 3600) timeString = `${Math.round(secondsToCrack / 60)} دقيقة`;
+            else if (secondsToCrack < 86400) timeString = `${Math.round(secondsToCrack / 3600)} ساعة`;
+            else if (secondsToCrack < 31536000) timeString = `${Math.round(secondsToCrack / 86400)} يوم`;
+            else timeString = `${Math.round(secondsToCrack / 31536000)} سنة`;
+
+            let strength = '';
+            let color = '';
+            if (secondsToCrack < 86400) { strength = 'ضعيفة 😰'; color = '#f56565'; }
+            else if (secondsToCrack < 31536000) { strength = 'متوسطة 😐'; color = '#ed8936'; }
+            else { strength = 'قوية 💪'; color = '#48bb78'; }
+
+            document.getElementById('password-result').innerHTML = 
+                `<div style="color: ${color}; font-size: 1.2em; font-weight: bold;">
+                    القوة: ${strength}<br>
+                    الوقت المتوقع للاختراق: ${timeString}<br>
+                    عدد الاحتمالات الممكنة: ${combinations.toExponential(2)}
+                </div>`;
+        }
+
+        document.getElementById('plaintext').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') encrypt();
+        });
+        document.getElementById('plaintext').addEventListener('input', function() {
+            document.getElementById('result').innerHTML = '';
+        });
+        document.getElementById('shift').addEventListener('input', function() {
+            document.getElementById('result').innerHTML = '';
+        });
+        document.getElementById('password-test').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') testPassword();
+        });
+        document.getElementById('password-test').addEventListener('input', function() {
+            document.getElementById('password-result').innerHTML = '';
+        });
+    </script>
+</body>
+</html>
